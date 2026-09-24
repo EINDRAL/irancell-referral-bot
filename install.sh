@@ -16,9 +16,9 @@ NC='\033[0m'
 
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════════════════════════════════╗"
-echo "║          📱 ربات پیشرفته رفرال و دعوت ایرانسل‌من                   ║"
-echo "║       Irancell Referral Bot (Pyrogram MTProto / Split-Route)      ║"
-echo "║           Author: Mohammad Yousef (@EINDRAL)                      ║"
+echo "║             📱 Irancell Referral & Inviter Bot                    ║"
+echo "║          Telegram Bot with V2Ray Split-Routing Support            ║"
+echo "║               Author: Mohammad Yousef (@EINDRAL)                  ║"
 echo "╚═══════════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -26,12 +26,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # 1. Python Check
-echo -e "${BLUE}[1/5] بررسی پایتون سیستم...${NC}"
+echo -e "${BLUE}[1/5] Checking Python installation...${NC}"
 if command -v python3 >/dev/null 2>&1; then
     PY_VER=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-    echo -e "${GREEN}✓ پایتون نسخه $PY_VER یافت شد.${NC}"
+    echo -e "${GREEN}✓ Found Python $PY_VER${NC}"
 else
-    echo -e "${RED}✗ پایتون ۳ یافت نشد! در حال نصب...${NC}"
+    echo -e "${RED}✗ Python 3 not found! Installing prerequisites...${NC}"
     if command -v apt-get &>/dev/null; then
         apt-get update -qq && apt-get install -y -qq python3 python3-venv python3-pip curl gcc
     elif command -v pacman &>/dev/null; then
@@ -40,72 +40,72 @@ else
 fi
 
 # 2. Virtual Environment
-echo -e "${BLUE}[2/5] راه‌اندازی محیط ایزوله پایتون (venv)...${NC}"
+echo -e "${BLUE}[2/5] Setting up isolated Python virtual environment (.venv)...${NC}"
 if [ ! -d ".venv" ]; then
     python3 -m venv .venv || {
-        echo -e "${RED}✗ خطا در ساخت venv. لطفاً بسته python3-venv را نصب کنید.${NC}"
+        echo -e "${RED}✗ Failed to create venv. Make sure python3-venv is installed.${NC}"
         exit 1
     }
-    echo -e "${GREEN}✓ محیط مجازی با موفقیت در .venv ساخته شد.${NC}"
+    echo -e "${GREEN}✓ Virtual environment created successfully under ./.venv${NC}"
 else
-    echo -e "${GREEN}✓ محیط مجازی موجود است.${NC}"
+    echo -e "${GREEN}✓ Virtual environment already exists.${NC}"
 fi
 
 VENV_PY="$SCRIPT_DIR/.venv/bin/python"
 
 # 3. Dependencies
-echo -e "${BLUE}[3/5] نصب و بررسی نیازمندی‌ها از requirements.txt...${NC}"
+echo -e "${BLUE}[3/5] Installing dependencies from requirements.txt...${NC}"
 "$VENV_PY" -m pip install --upgrade pip -q >/dev/null 2>&1 || true
 "$VENV_PY" -m pip install -r requirements.txt -q
-echo -e "${GREEN}✓ تمام وابستگی‌ها با موفقیت نصب شدند.${NC}"
+echo -e "${GREEN}✓ All dependencies installed successfully.${NC}"
 
 # 4. Interactive Configuration (.env) & Proxy Checker
-echo -e "${BLUE}[4/5] پیکربندی و بررسی هوشمند سلامت شبکه (.env)...${NC}"
+echo -e "${BLUE}[4/5] Checking configuration (.env) & testing connectivity...${NC}"
 if [ ! -f ".env" ]; then
-    echo -e "${YELLOW}فایل تنظیمات یافت نشد. لطفاً اطلاعات ربات را وارد کنید:${NC}\n"
+    echo -e "${YELLOW}No .env found. Let's configure your bot settings:${NC}\n"
     
     # Bot Token Validation
     while true; do
-        read -rp "👉 توکن ربات تلگرام (از @BotFather): " BOT_TOKEN
+        read -rp "👉 Enter Telegram Bot Token (from @BotFather): " BOT_TOKEN
         if [[ "$BOT_TOKEN" =~ ^[0-9]+:[a-zA-Z0-9_-]+$ ]]; then
             break
         else
-            echo -e "${RED}✗ فرمت توکن نامعتبر است. نمونه صحیح: 123456789:ABCdefGhI...${NC}"
+            echo -e "${RED}✗ Invalid bot token format. Example: 123456789:ABCdefGhI...${NC}"
         fi
     done
 
     # Numeric Admin ID Validation
     while true; do
-        read -rp "👉 آیدی عددی ادمین تلگرام (از @userinfobot): " ADMIN_ID
+        read -rp "👉 Enter Numeric Telegram Admin ID (from @userinfobot): " ADMIN_ID
         if [[ "$ADMIN_ID" =~ ^[0-9]+$ ]]; then
             break
         else
-            echo -e "${RED}✗ آیدی ادمین باید صرفاً یک عدد باشد (مثلاً 1429926943).${NC}"
+            echo -e "${RED}✗ Admin ID must be numeric (e.g. 1429926943).${NC}"
         fi
     done
 
     # Proxy / V2Ray Config with Live Health Checking
-    echo -e "\n${CYAN}🌐 تنظیم پروکسی تلگرام (مخصوص سرورهای داخل ایران):${NC}"
-    echo -e "می‌توانید یکی از موارد زیر را وارد کنید:"
-    echo -e " • لینک V2Ray (VLESS / VMess / Trojan / Shadowsocks)"
-    echo -e " • آدرس پروکسی (socks5://127.0.0.1:1080 یا http://...)"
-    echo -e " • اینتر خالی (اتصال مستقیم - اگر سرور شما فیلتر نیست)"
+    echo -e "\n${CYAN}🌐 Telegram Proxy Configuration (Required for Iran VPS):${NC}"
+    echo -e "You can provide any of the following:"
+    echo -e " • V2Ray Link (vless://, vmess://, trojan://, ss://)"
+    echo -e " • Standard Proxy (socks5://127.0.0.1:1080 or http://...)"
+    echo -e " • Press Enter for Direct Connection (if Telegram is not filtered on your server)"
 
     TELEGRAM_PROXY=""
     while true; do
-        read -rp "👉 پروکسی یا لینک کانفیگ را وارد کنید: " PROXY_INPUT
+        read -rp "👉 Enter proxy URL or V2Ray config link: " PROXY_INPUT
         PROXY_INPUT=$(echo "$PROXY_INPUT" | xargs)
 
         # If user entered a V2Ray link, ensure Xray is available
         if [[ "$PROXY_INPUT" =~ ^(vless|vmess|trojan|ss):// ]]; then
             if ! command -v xray &>/dev/null && [ ! -f "/usr/local/bin/xray" ] && [ ! -f "$SCRIPT_DIR/bin/xray" ]; then
-                echo -e "${YELLOW}[!] کانفیگ V2Ray شناسایی شد اما هسته Xray نصب نیست.${NC}"
-                echo -e "${BLUE}در حال دانلود و نصب هسته رسمی Xray...${NC}"
+                echo -e "${YELLOW}[!] V2Ray config detected but Xray-core is not installed.${NC}"
+                echo -e "${BLUE}Downloading and installing official Xray-core...${NC}"
                 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install >/dev/null 2>&1 || true
             fi
         fi
 
-        echo -e "${BLUE}⏳ در حال بررسی و تست اتصال به دیتاسنترهای تلگرام...${NC}"
+        echo -e "${BLUE}⏳ Testing connection to Telegram Data Centers...${NC}"
         CHECK_OUT=$("$VENV_PY" proxy_manager.py --check "$PROXY_INPUT" 2>&1 || true)
         
         if echo "$CHECK_OUT" | grep -q "SUCCESS"; then
@@ -115,12 +115,12 @@ if [ ! -f ".env" ]; then
             break
         else
             ERR=$(echo "$CHECK_OUT" | sed 's/FAILED: //')
-            echo -e "${RED}✗ خطا در اتصال به تلگرام: ${ERR}${NC}"
-            read -rp "آیا مایلید کانفیگ دیگری وارد کنید؟ [Y/n]: " RETRY_CHOICE
+            echo -e "${RED}✗ Connection failed: ${ERR}${NC}"
+            read -rp "Would you like to try another proxy/config? [Y/n]: " RETRY_CHOICE
             RETRY_CHOICE=${RETRY_CHOICE:-Y}
             if [[ "$RETRY_CHOICE" =~ ^[Nn] ]]; then
                 TELEGRAM_PROXY="$PROXY_INPUT"
-                echo -e "${YELLOW}کانفیگ با وجود خطا ذخیره شد.${NC}"
+                echo -e "${YELLOW}Warning: Proceeding with unverified proxy.${NC}"
                 break
             fi
         fi
@@ -133,18 +133,18 @@ API_ID=2040
 API_HASH=b18441a1ff607e10a989891a5462e627
 TELEGRAM_PROXY=$TELEGRAM_PROXY
 EOF
-    echo -e "\n${GREEN}✓ فایل .env با موفقیت ایجاد و ذخیره شد!${NC}"
+    echo -e "\n${GREEN}✓ Configuration saved to .env successfully!${NC}"
 else
-    echo -e "${GREEN}✓ فایل .env از قبل موجود است.${NC}"
+    echo -e "${GREEN}✓ Existing .env configuration found.${NC}"
 fi
 
 # 5. Launch Option
-echo -e "\n${BLUE}[5/5] نحوه اجرای ربات:${NC}"
-echo "1) نصب و فعال‌سازی به صورت سرویس دائمی (systemd - پیشنهادی برای سرور)"
-echo "2) اجرای مستقیم در ترمینال (Foreground / مشاهده لاگ زنده)"
-echo "3) اجرای در پس‌زمینه (nohup)"
-echo "4) خروج از نصب"
-read -rp "گزینه مورد نظر را انتخاب کنید [1-4] (پیش‌فرض 1): " LAUNCH_CHOICE
+echo -e "\n${BLUE}[5/5] Launch options:${NC}"
+echo "1) Install & start as 24/7 background service (systemd - Recommended)"
+echo "2) Run in foreground now (Interactive / Live logs)"
+echo "3) Run in background with nohup"
+echo "4) Exit setup"
+read -rp "Select option [1-4] (Default: 1): " LAUNCH_CHOICE
 LAUNCH_CHOICE=${LAUNCH_CHOICE:-1}
 
 case "$LAUNCH_CHOICE" in
@@ -171,26 +171,26 @@ EOF
             systemctl daemon-reload
             systemctl enable irancell-bot.service >/dev/null 2>&1
             systemctl restart irancell-bot.service
-            echo -e "\n${GREEN}✓ سرویس irancell-bot فعال شد و ۲۴ ساعته در پس‌زمینه اجرا می‌شود.${NC}"
-            echo -e " • وضعیت سرویس: ${YELLOW}systemctl status irancell-bot.service${NC}"
-            echo -e " • مشاهده لاگ زنده: ${YELLOW}journalctl -u irancell-bot.service -f${NC}"
+            echo -e "\n${GREEN}✓ irancell-bot.service is active and running 24/7 in background.${NC}"
+            echo -e " • Check status: ${YELLOW}systemctl status irancell-bot.service${NC}"
+            echo -e " • Monitor logs: ${YELLOW}journalctl -u irancell-bot.service -f${NC}"
         else
-            echo -e "${YELLOW}توجه: برای ایجاد سرویس systemd دسترسی root لازم است. ربات با nohup اجرا می‌شود.${NC}"
+            echo -e "${YELLOW}Note: Root privileges required for systemd. Starting with nohup instead...${NC}"
             nohup "$VENV_PY" bot.py > bot.log 2>&1 &
-            echo -e "${GREEN}✓ ربات در پس‌زمینه اجرا شد (PID: $!). لاگ‌ها در bot.log ذخیره می‌شوند.${NC}"
+            echo -e "${GREEN}✓ Bot started in background (PID: $!). Logs written to bot.log${NC}"
         fi
         ;;
     2)
-        echo -e "${GREEN}در حال اجرای ربات... برای توقف کلیدهای Ctrl+C را بزنید.${NC}"
+        echo -e "${GREEN}Starting bot in foreground... Press Ctrl+C to stop.${NC}"
         "$VENV_PY" bot.py
         ;;
     3)
         nohup "$VENV_PY" bot.py > bot.log 2>&1 &
-        echo -e "${GREEN}✓ ربات در پس‌زمینه اجرا شد (PID: $!).${NC}"
-        echo -e "برای مشاهده لاگ‌ها: ${YELLOW}tail -f bot.log${NC}"
+        echo -e "${GREEN}✓ Bot started in background (PID: $!).${NC}"
+        echo -e "Monitor logs anytime with: ${YELLOW}tail -f bot.log${NC}"
         ;;
     *)
-        echo -e "${YELLOW}نصب به اتمام رسید. هر زمان مایل بودید می‌توانید با دستور زیر ربات را اجرا کنید:${NC}"
+        echo -e "${YELLOW}Setup complete. You can run the bot anytime using:${NC}"
         echo "  $VENV_PY bot.py"
         ;;
 esac

@@ -55,7 +55,7 @@ def test_socks5_socket(host: str, port: int, dest_ip: str = "149.154.167.50", de
         resp = s.recv(2)
         if resp != b"\x05\x00":
             s.close()
-            return False, f"احراز هویت SOCKS5 رد شد ({resp.hex() if resp else 'خالی'})"
+            return False, f"SOCKS5 authentication failed ({resp.hex() if resp else 'empty'})"
         
         ip_bytes = socket.inet_aton(dest_ip)
         req = b"\x05\x01\x00\x01" + ip_bytes + dest_port.to_bytes(2, "big")
@@ -64,15 +64,15 @@ def test_socks5_socket(host: str, port: int, dest_ip: str = "149.154.167.50", de
         dt = int((time.time() - t0) * 1000)
         s.close()
         if len(resp2) >= 4 and resp2[1] == 0x00:
-            return True, f"اتصال با موفقیت برقرار شد (پینگ: {dt} میلی‌ثانیه)"
+            return True, f"Telegram connection verified successfully (Latency: {dt}ms)"
         code = resp2[1] if len(resp2) >= 2 else 99
-        return False, f"پروکسی مقصد را باز نکرد (کد خطا: {code})"
+        return False, f"Proxy failed to reach Telegram destination (Error code: {code})"
     except socket.timeout:
-        return False, "تایم‌اوت در اتصال به تلگرام (پروکسی پاسخ نداد)"
+        return False, "Connection to Telegram timed out (No response from proxy)"
     except ConnectionRefusedError:
-        return False, "پورت پروکسی بسته است (اتصال رد شد)"
+        return False, "Proxy port is closed (Connection refused)"
     except Exception as e:
-        return False, f"خطای شبکه: {str(e)}"
+        return False, f"Network error: {str(e)}"
 
 def parse_vmess(uri: str) -> Dict[str, Any]:
     raw = uri[8:]
@@ -293,7 +293,7 @@ def convert_link_to_xray_config(link: str, listen_port: int) -> Dict[str, Any]:
         elif scheme == "trojan":
             outbound = parse_trojan(parsed)
         else:
-            raise ValueError(f"پروتکل پشتیبانی‌نشده: {scheme}")
+            raise ValueError(f"Unsupported protocol: {scheme}")
 
     config = {
         "log": {
@@ -346,9 +346,9 @@ def check_proxy(proxy_str: str, timeout: float = 6.0) -> Tuple[bool, str]:
         try:
             with socket.create_connection(("149.154.167.50", 443), timeout=timeout):
                 dt = int((time.time() - t0) * 1000)
-                return True, f"اتصال مستقیم به تلگرام برقرار است ({dt}ms)"
+                return True, f"Direct connection to Telegram is active (Latency: {dt}ms)"
         except Exception as e:
-            return False, f"عدم اتصال مستقیم به تلگرام: {e}"
+            return False, f"Direct Telegram connection failed: {e}"
 
     proxy_str = proxy_str.strip()
 
@@ -364,13 +364,13 @@ def check_proxy(proxy_str: str, timeout: float = 6.0) -> Tuple[bool, str]:
     if any(proxy_str.startswith(s) for s in v2ray_schemes):
         xray_bin = find_xray_binary()
         if not xray_bin:
-            return False, "ابزار Xray بر روی سیستم یافت نشد. ابتدا Xray را نصب کنید."
+            return False, "Xray-core binary not found. Please install Xray first."
 
         test_port = get_free_port(10890)
         try:
             cfg = convert_link_to_xray_config(proxy_str, test_port)
         except Exception as e:
-            return False, f"فرمت لینک نامعتبر است: {e}"
+            return False, f"Invalid link format: {e}"
 
         temp_cfg_path = Path(__file__).resolve().parent / f".tmp_xray_{test_port}.json"
         try:
@@ -401,7 +401,7 @@ def check_proxy(proxy_str: str, timeout: float = 6.0) -> Tuple[bool, str]:
                 except Exception:
                     pass
 
-    return False, "فرمت پروکسی وارد شده نامعتبر است."
+    return False, "Unsupported proxy format."
 
 def setup_telegram_proxy(proxy_str: Optional[str]) -> Optional[Dict[str, Any]]:
     global _XRAY_PROCESS, _CONFIG_FILE
@@ -433,8 +433,7 @@ def setup_telegram_proxy(proxy_str: Optional[str]) -> Optional[Dict[str, Any]]:
         xray_bin = find_xray_binary()
         if not xray_bin:
             error_msg = (
-                "❌ ابزار Xray برای اجرای کانفیگ V2Ray یافت نشد!\n"
-                "لطفاً Xray را نصب کنید یا پروکسی را به صورت socks5:// وارد نمایید."
+                "Xray-core binary not found! Please install Xray or provide a SOCKS5/HTTP proxy."
             )
             logger.error(error_msg)
             raise RuntimeError(error_msg)
@@ -465,7 +464,7 @@ def setup_telegram_proxy(proxy_str: Optional[str]) -> Optional[Dict[str, Any]]:
         if not is_port_in_use(listen_port):
             logger.warning(f"Port {listen_port} did not open immediately, continuing...")
 
-        logger.info(f"✅ V2Ray proxy successfully launched on 127.0.0.1:{listen_port}")
+        logger.info(f"V2Ray proxy successfully launched on 127.0.0.1:{listen_port}")
         return {
             "scheme": "socks5",
             "hostname": "127.0.0.1",
@@ -480,7 +479,7 @@ def setup_telegram_proxy(proxy_str: Optional[str]) -> Optional[Dict[str, Any]]:
             "port": int(parts[1])
         }
 
-    raise ValueError(f"فرمت پروکسی ناشناخته است: {proxy_str[:25]}...")
+    raise ValueError(f"Unknown proxy format: {proxy_str[:25]}...")
 
 if __name__ == "__main__":
     if len(sys.argv) > 2 and sys.argv[1] == "--check":
