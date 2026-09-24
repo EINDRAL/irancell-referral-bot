@@ -110,4 +110,4 @@ systemctl stop irancell-bot.service
 
 این پروژه تحت لایسنس [MIT](LICENSE) منتشر شده است و استفاده یا شخصی‌سازی آن با ذکر منبع آزاد است.
 
-**سازنده:** محمد یوسف مروج نیا ([@EINDRAL](https://github.com/EINDRAL))
+**Developer:** Mohammad Yousef Morovajnia ([@EINDRAL](https://github.com/EINDRAL))
