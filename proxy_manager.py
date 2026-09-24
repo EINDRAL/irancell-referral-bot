@@ -443,15 +443,16 @@ def setup_telegram_proxy(proxy_str: Optional[str]) -> Optional[Dict[str, Any]]:
         cfg_dict = convert_link_to_xray_config(proxy_str, listen_port)
 
         work_dir = Path(__file__).resolve().parent
-        _CONFIG_FILE = work_dir / f"xray_auto_{listen_port}.json"
-        with open(_CONFIG_FILE, "w", encoding="utf-8") as f:
+        config_path = work_dir / f"xray_auto_{listen_port}.json"
+        with open(config_path, "w", encoding="utf-8") as f:
             json.dump(cfg_dict, f, indent=2)
 
         stop_xray()
+        _CONFIG_FILE = config_path
 
         logger.info(f"Starting Xray ({xray_bin}) on 127.0.0.1:{listen_port}...")
         _XRAY_PROCESS = subprocess.Popen(
-            [xray_bin, "run", "-c", str(_CONFIG_FILE)],
+            [xray_bin, "run", "-c", str(config_path)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
